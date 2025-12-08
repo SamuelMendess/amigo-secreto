@@ -311,6 +311,392 @@ function BackToTop() {
     );
 }
 
+// --- Expense Calculator Component ---
+function ExpenseCalculator() {
+    const [expenses, setExpenses] = useState([]);
+    const [newExpense, setNewExpense] = useState({ selectedPerson: '', foodItem: '', amount: '', image: null, imagePreview: null });
+    const [totalPeople] = useState(10);
+    const [foodItemsByPerson, setFoodItemsByPerson] = useState({});
+    const [isAfterEvent, setIsAfterEvent] = useState(false);
+
+    // Verificar se é após 25 de dezembro às 18h
+    useEffect(() => {
+        const checkTime = () => {
+            const now = new Date();
+            const eventTime = new Date('2025-12-25T18:00:00');
+            setIsAfterEvent(now >= eventTime);
+        };
+        
+        checkTime();
+        const interval = setInterval(checkTime, 60000); // Verificar a cada minuto
+        return () => clearInterval(interval);
+    }, []);
+
+    // Carregaritens de comida do Supabase para associar a cada pessoa
+    useEffect(() => {
+        const loadFoodItemsForCalculator = async () => {
+            const { data, error } = await supabase
+                .from('food_items')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (!error && data) {
+                const itemsByPerson = {};
+                data.forEach(item => {
+                    if (item.person) {
+                        // Se a pessoa já tem um item, concatenar (em caso de múltiplos)
+                        itemsByPerson[item.person] = item.name;
+                    }
+                });
+                setFoodItemsByPerson(itemsByPerson);
+            }
+        };
+
+        loadFoodItemsForCalculator();
+
+        // Subscribe para atualizações em tempo real
+        const subscription = supabase
+            .channel('food_items_calculator')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'food_items' },
+                () => {
+                    loadFoodItemsForCalculator();
+                }
+            )
+            .subscribe();
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const selectedPerson = newExpense.selectedPerson ? participants.find(p => p.name === newExpense.selectedPerson) : null;
+    
+    // Quando seleciona uma pessoa, preencha automaticamente com o item do Mural
+    const handlePersonSelect = (personName) => {
+        setNewExpense({
+            ...newExpense,
+            selectedPerson: personName,
+            foodItem: foodItemsByPerson[personName] || ''
+        });
+    };
+
+    const addExpense = () => {
+        if (newExpense.selectedPerson && newExpense.foodItem && newExpense.amount) {
+            const expense = {
+                id: Date.now(),
+                name: newExpense.selectedPerson,
+                amount: parseFloat(newExpense.amount),
+                foodItem: newExpense.foodItem,
+                image: newExpense.imagePreview,
+                date: new Date().toLocaleDateString('pt-BR')
+            };
+            setExpenses([...expenses, expense]);
+            setNewExpense({ selectedPerson: '', foodItem: '', amount: '', image: null, imagePreview: null });
+        }
+    };
+
+    const deleteExpense = (id) => {
+        setExpenses(expenses.filter(e => e.id !== id));
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setNewExpense({ ...newExpense, image: file, imagePreview: event.target.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Calcular totais e divisão
+    const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const averagePerPerson = totalSpent / totalPeople;
+    
+    // Calcular saldos (quanto acima ou abaixo da média)
+    const balances = {};
+    
+    // Inicializar todas as 10 pessoas com saldo 0
+    participants.forEach(person => {
+        balances[person.name] = 0;
+    });
+    
+    expenses.forEach(exp => {
+        if (!balances[exp.name]) balances[exp.name] = 0;
+        balances[exp.name] += exp.amount;
+    });
+
+    // Calcular saldos (quanto acima ou abaixo da média)
+    const settlements = Object.entries(balances).map(([name, spent]) => ({
+        name,
+        spent,
+        balance: spent - averagePerPerson
+    }));
+
+    // Função para calcular quem paga para quem (algoritmo de acerto de contas)
+    const calculateTransfers = () => {
+        // Criar cópias dos saldos para trabalhar
+        const debtors = settlements.filter(s => s.balance < -0.01).map(s => ({ ...s })).sort((a, b) => a.balance - b.balance);
+        const creditors = settlements.filter(s => s.balance > 0.01).map(s => ({ ...s })).sort((a, b) => b.balance - a.balance);
+        
+        const transfers = [];
+        let i = 0, j = 0;
+
+        while (i < debtors.length && j < creditors.length) {
+            const debtor = debtors[i];
+            const creditor = creditors[j];
+            const amount = Math.min(Math.abs(debtor.balance), creditor.balance);
+
+            transfers.push({
+                from: debtor.name,
+                to: creditor.name,
+                amount: parseFloat(amount.toFixed(2))
+            });
+
+            debtor.balance = parseFloat((debtor.balance + amount).toFixed(2));
+            creditor.balance = parseFloat((creditor.balance - amount).toFixed(2));
+
+            if (Math.abs(debtor.balance) < 0.01) i++;
+            if (creditor.balance < 0.01) j++;
+        }
+
+        return transfers;
+    };
+
+    const transfers = expenses.length > 0 ? calculateTransfers() : [];
+
+    return (
+        <div style={{ padding: '20px' }}>
+            <h2 style={{ color: '#ffd700', marginBottom: '20px', fontSize: '1.8rem' }}>💰 Calculadora de Gastos</h2>
+
+            {!isAfterEvent && (
+                <div style={{ background: 'rgba(255,215,0,0.15)', border: '2px solid #ffd700', borderRadius: '12px', padding: '20px', marginBottom: '30px', textAlign: 'center' }}>
+                    <p style={{ color: '#ffd700', fontSize: '1.1rem', fontWeight: 'bold', margin: '0 0 10px 0' }}>🎄 Evento ainda não começou!</p>
+                    <p style={{ color: '#fff', margin: '0 0 15px 0' }}>A Calculadora de Gastos estará disponível após o evento, no dia 25 de dezembro às 18h.</p>
+                    <p style={{ color: '#ccc', fontSize: '0.9rem', margin: '0' }}>Volte mais tarde para fazer os acertos de contas! 💳</p>
+                </div>
+            )}
+
+            {isAfterEvent && (
+                <>
+                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '2px solid rgba(255,215,0,0.2)' }}>
+                    <h3 style={{ color: '#fff', marginBottom: '15px' }}>Adicionar Gasto</h3>
+                    
+                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                        <select
+                            value={newExpense.selectedPerson}
+                            onChange={(e) => handlePersonSelect(e.target.value)}
+                            style={{ flex: 1, minWidth: '150px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                        >
+                            <option value="" style={{ background: '#2a0a10', color: '#fff' }}>Selecione uma pessoa...</option>
+                            {participants.map(person => (
+                                <option key={person.id} value={person.name} style={{ background: '#2a0a10', color: '#fff' }}>
+                                    {person.name}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            type="text"
+                            placeholder="O que vai levar? (ex: Pudim, Mousse)"
+                            value={newExpense.foodItem}
+                            onChange={(e) => setNewExpense({ ...newExpense, foodItem: e.target.value })}
+                            style={{ flex: 1, minWidth: '150px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                        <input
+                            type="number"
+                            placeholder="Valor (€)"
+                            value={newExpense.amount}
+                            onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                            step="0.01"
+                            style={{ flex: 1, minWidth: '120px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#fff' }}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                style={{ display: 'none' }}
+                            />
+                            📸 Fatura (Opcional)
+                        </label>
+                        {newExpense.imagePreview && (
+                            <span style={{ color: '#90EE90', fontSize: '0.9rem' }}>✓ Imagem selecionada</span>
+                        )}
+                    </div>
+
+                    {newExpense.imagePreview && (
+                        <img 
+                            src={newExpense.imagePreview} 
+                            alt="Preview" 
+                            style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: '8px', marginBottom: '15px', objectFit: 'cover' }}
+                        />
+                    )}
+
+                    <button
+                        onClick={addExpense}
+                        disabled={!newExpense.selectedPerson || !newExpense.foodItem || !newExpense.amount}
+                        style={{
+                            background: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : 'rgba(255,215,0,0.3)',
+                            color: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? '#000' : '#666',
+                            border: 'none',
+                            padding: '12px 30px',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            cursor: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? 'pointer' : 'not-allowed',
+                            width: '100%'
+                        }}
+                        onMouseOver={(e) => {
+                            if (newExpense.selectedPerson && newExpense.foodItem && newExpense.amount) {
+                                e.target.style.transform = 'scale(1.02)';
+                            }
+                        }}
+                        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                    >
+                        + Adicionar Gasto
+                    </button>
+                </div>
+
+                {/* Resumo */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+                    <div style={{ background: 'rgba(255,215,0,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #ffd700', textAlign: 'center' }}>
+                        <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Total Gasto</p>
+                        <h3 style={{ color: '#ffd700', fontSize: '1.8rem' }}>€ {totalSpent.toFixed(2)}</h3>
+                    </div>
+                    <div style={{ background: 'rgba(144,238,144,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #90EE90', textAlign: 'center' }}>
+                        <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Por Pessoa</p>
+                        <h3 style={{ color: '#90EE90', fontSize: '1.8rem' }}>€ {averagePerPerson.toFixed(2)}</h3>
+                    </div>
+                </div>
+
+                {/* Lista de gastos */}
+                {expenses.length > 0 && (
+                    <>
+                        <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>📋 Gastos Registrados</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+                            {expenses.map(exp => (
+                                <div 
+                                    key={exp.id}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        padding: '15px',
+                                        borderRadius: '10px',
+                                        border: '1px solid rgba(255,215,0,0.2)',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        gap: '15px'
+                                    }}
+                                >
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '4px' }}>
+                                            {exp.name} {exp.foodItem && `• ${exp.foodItem}`}
+                                        </p>
+                                        <p style={{ color: '#ccc', fontSize: '0.85rem' }}>€ {exp.amount.toFixed(2)} • {exp.date}</p>
+                                        {exp.image && (
+                                            <img 
+                                                src={exp.image} 
+                                                alt="Fatura" 
+                                                style={{ maxWidth: '100px', maxHeight: '80px', borderRadius: '6px', marginTop: '8px', cursor: 'pointer', objectFit: 'cover' }}
+                                                onClick={() => window.open(exp.image)}
+                                            />
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => deleteExpense(exp.id)}
+                                        style={{
+                                            background: 'rgba(255,69,0,0.2)',
+                                            border: 'none',
+                                            color: '#ff6347',
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '1.2rem'
+                                        }}
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {/* Acertos */}
+                {expenses.length > 0 && (
+                    <>
+                        <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💸 Quem Deve Pagar/Receber</h3>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '2px solid rgba(144,238,144,0.2)', marginBottom: '30px' }}>
+                            {settlements.map(settlement => {
+                                const shouldPay = settlement.balance < -0.01; // Gastou menos que a média
+                                const isBalanced = Math.abs(settlement.balance) < 0.01;
+                                const absBalance = Math.abs(settlement.balance);
+                                
+                                return (
+                                    <div key={settlement.name} style={{ marginBottom: '12px', padding: '12px', background: shouldPay ? 'rgba(255,69,0,0.1)' : isBalanced ? 'rgba(100,200,100,0.1)' : 'rgba(144,238,144,0.1)', borderRadius: '8px', border: `1px solid ${shouldPay ? '#ff6347' : isBalanced ? '#90EE90' : '#90EE90'}` }}>
+                                        <p style={{ color: '#fff', marginBottom: '4px' }}>
+                                            <strong>{settlement.name}</strong> - Gastou: € {settlement.spent.toFixed(2)}
+                                        </p>
+                                        {isBalanced ? (
+                                            <p style={{ color: '#90EE90', fontSize: '0.95rem' }}>✅ Equilibrado!</p>
+                                        ) : shouldPay ? (
+                                            <p style={{ color: '#ff6347', fontSize: '0.95rem' }}>💵 Deve pagar: <strong>€ {absBalance.toFixed(2)}</strong></p>
+                                        ) : (
+                                            <p style={{ color: '#90EE90', fontSize: '0.95rem' }}>💰 Deve receber: <strong>€ {absBalance.toFixed(2)}</strong></p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Acertos de Contas</h3>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '2px solid rgba(100,149,237,0.3)' }}>
+                            {transfers.length > 0 ? (
+                                transfers.map((transfer, idx) => (
+                                    <div 
+                                        key={idx}
+                                        style={{
+                                            marginBottom: '12px',
+                                            padding: '15px',
+                                            background: 'rgba(100,149,237,0.1)',
+                                            borderRadius: '8px',
+                                            border: '1px solid rgba(100,149,237,0.5)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '15px'
+                                        }}
+                                    >
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ color: '#fff', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '0.95rem' }}>
+                                                {transfer.from} → {transfer.to}
+                                            </p>
+                                            <p style={{ color: '#6495ed', margin: '0', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                                                € {transfer.amount.toFixed(2)}
+                                            </p>
+                                        </div>
+                                        <div style={{ fontSize: '2rem' }}>💶</div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p style={{ color: '#ccc', textAlign: 'center', margin: '0', fontSize: '0.95rem' }}>
+                                    Nenhuma transferência necessária (tudo equilibrado!)
+                                </p>
+                            )}
+                        </div>
+                    </>
+                )}
+                </>
+            )}
+        </div>
+    );
+}
+
 // --- Christmas Special Effects Component ---
 function ChristmasEffects() {
     const [isChristmas, setIsChristmas] = useState(false);
@@ -460,6 +846,7 @@ function ChristmasEffects() {
 export default function App() {
     const [selectedId, setSelectedId] = useState(null);
     const [showLinksInfo, setShowLinksInfo] = useState(null);
+    const [activeTab, setActiveTab] = useState('amigo-secreto'); // 'amigo-secreto' ou 'calculadora'
     const selectedParticipant = participants.find(p => p.id === selectedId);
 
     // Prevent scroll when modal is open
@@ -470,6 +857,43 @@ export default function App() {
 
     return (
         <div className="container">
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px', paddingTop: '20px' }}>
+                <button
+                    onClick={() => setActiveTab('amigo-secreto')}
+                    style={{
+                        padding: '10px 25px',
+                        background: activeTab === 'amigo-secreto' ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : 'rgba(255,255,255,0.1)',
+                        color: activeTab === 'amigo-secreto' ? '#000' : '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontSize: '1rem'
+                    }}
+                >
+                    🎁 Amigo Secreto
+                </button>
+                <button
+                    onClick={() => setActiveTab('calculadora')}
+                    style={{
+                        padding: '10px 25px',
+                        background: activeTab === 'calculadora' ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : 'rgba(255,255,255,0.1)',
+                        color: activeTab === 'calculadora' ? '#000' : '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontSize: '1rem'
+                    }}
+                >
+                    💰 Calculadora
+                </button>
+            </div>
+
+            {/* Conditional Rendering based on Tab */}
+            {activeTab === 'amigo-secreto' ? (
+            <div>
             {/* 1. Header Section */}
             <header>
                 <h1 className="title">Amigo Secreto - Natal 2025</h1>
@@ -569,6 +993,10 @@ export default function App() {
                         </div>
                     </div>
                 </div>
+            )}
+            </div>
+            ) : (
+            <ExpenseCalculator />
             )}
 
             <BackToTop />
