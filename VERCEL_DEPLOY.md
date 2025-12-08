@@ -17,13 +17,11 @@ PASSO 1: Acesse Vercel
    (se não tiver, crie uma conta)
 3. Clique em "Add New..." → "Project"
 
-
 PASSO 2: Selecione o Repositório
 ──────────────────────────────────
 
 1. Procure por "amigo-secreto"
 2. Clique em "Import"
-
 
 PASSO 3: Configure o Projeto
 ──────────────────────────
@@ -36,7 +34,6 @@ Output Directory: dist
 Install Command: npm install
 
 (Já deve estar preenchido, mas verifique!)
-
 
 PASSO 4: Adicione Variáveis de Ambiente ⭐ SUPER IMPORTANTE
 ──────────────────────────────────────────────────────
@@ -51,14 +48,12 @@ Valor: [Copie de: https://app.supabase.com → Settings → API → anon public]
 
 Clique em "Add" para cada uma
 
-
 PASSO 5: Deploy
 ─────────────
 
 1. Clique em "Deploy"
 2. Aguarde (leva ~2-3 minutos)
 3. Quando aparecer ✅, seu site está ONLINE!
-
 
 RESULTADO FINAL:
 ════════════════════════════════════════════════════════════════════════════════
@@ -72,7 +67,6 @@ Vocês podem:
 ✅ Ver sincronização em tempo real
 ✅ Compartilhar a URL com amigos
 
-
 DICAS IMPORTANTES:
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -81,7 +75,6 @@ DICAS IMPORTANTES:
 3. Não esqueça de salvar após adicionar as variáveis
 4. O primeiro deploy leva mais tempo, os próximos são rápidos
 
-
 DEPOIS DO DEPLOY:
 ═════════════════════════════════════════════════════════════════════════════════
 
@@ -89,12 +82,12 @@ Toda vez que você fizer:
 $ git push origin main
 
 Vercel automaticamente:
+
 1. Detecta a mudança
 2. Faz build
 3. Publica o site
 
 SEM você fazer nada! 🎉
-
 
 ESTÁ PRONTO?
 ═════════════════════════════════════════════════════════════════════════════════
@@ -105,7 +98,6 @@ ESTÁ PRONTO?
 [ ] Adicionou variáveis
 [ ] Clicou em Deploy
 [ ] Site está ONLINE!
-
 
 PRÓXIMA ETAPA:
 ═════════════════════════════════════════════════════════════════════════════════
@@ -122,5 +114,6 @@ Seu site está PRODUÇÃO!
 ═══════════════════════════════════════════════════════════════════════════════
 
 Qualquer dúvida, leia:
+
 - DEPLOYMENT.md (tem mais detalhes)
 - SUPABASE_SETUP.md (confirmar credenciais)

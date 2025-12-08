@@ -8,13 +8,14 @@ Seu site agora tem:
 ✅ **Mural da Ceia** com itens salvos em banco de dados  
 ✅ **Sincronização em tempo real** - todos veem quando alguém adiciona um item  
 ✅ **Responsivo** para mobile, tablet e desktop  
-✅ **Deploy pronto** para Vercel  
+✅ **Deploy pronto** para Vercel
 
 ## 🚀 Próximos Passos
 
 ### 1. Configurar Supabase (5 minutos)
 
 Siga o guia em `SUPABASE_SETUP.md` para:
+
 - Criar conta no Supabase (gratuito!)
 - Criar a tabela do banco
 - Copiar as credenciais no arquivo `.env`
@@ -56,6 +57,7 @@ Vercel faz deploy automaticamente! 🎉
 ## 🆘 Dúvidas?
 
 Se algo não funcionar:
+
 1. Verifique se adicionou as variáveis de ambiente no `.env`
 2. Verifique se a tabela foi criada no Supabase
 3. Abra o console do navegador (F12) para ver mensagens de erro

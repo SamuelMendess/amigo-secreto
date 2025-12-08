@@ -101,7 +101,8 @@ git push origin main
 
 ## 🔐 Segurança
 
-⚠️ **Importante**: 
+⚠️ **Importante**:
+
 - Use apenas a chave `anon public` (não a chave `service_role`)
 - Elas estão configuradas em `.env` que é públicas no Vercel (isso é ok para `anon`)
 - O Supabase tem autenticação e RLS para proteger dados
@@ -109,16 +110,19 @@ git push origin main
 ## 🆘 Problemas Comuns
 
 ### "Erro ao conectar ao banco de dados"
+
 - Verifique se as credenciais estão corretas no `.env`
 - Verifique se a tabela `food_items` foi criada
 - Verifique se Row Level Security está habilitado
 
 ### Itens não aparecem em tempo real
+
 - Recarregue a página
 - Verifique se o Supabase está online
 - Verifique o console do navegador (F12) para erros
 
 ### Deploy no Vercel não funciona
+
 - Certifique-se de que adicionou as variáveis de ambiente no Vercel
 - Faça redeploy após adicionar as variáveis
 

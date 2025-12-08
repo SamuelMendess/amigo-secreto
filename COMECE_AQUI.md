@@ -30,6 +30,7 @@ Um **site de Amigo Secreto completo** com:
 ## 3 Passos para Publicar
 
 ### Passo 1: Setup Supabase (7 minutos)
+
 ```
 1. Abrir https://supabase.com
 2. Criar conta
@@ -37,21 +38,25 @@ Um **site de Amigo Secreto completo** com:
 4. Executar SQL (copiar/colar)
 5. Copiar credenciais pro .env
 ```
+
 👉 Ver: `SUPABASE_SETUP.md`
 
 ### Passo 2: Testar Localmente (3 minutos)
+
 ```
 npm run dev
 # Testar no http://localhost:5173
 ```
 
 ### Passo 3: Publicar no Vercel (5 minutos)
+
 ```
 git add .
 git commit -m "Add Supabase"
 git push origin main
 # Vercel faz deploy automático!
 ```
+
 👉 Ver: `DEPLOYMENT.md`
 
 ---
@@ -59,18 +64,21 @@ git push origin main
 ## Arquivos Novos Criados
 
 📄 **Documentação**
+
 - `SUPABASE_SETUP.md` - Guia completo de setup
 - `DEPLOYMENT.md` - Guia de deploy
 - `README_PT.md` - Como usar
 - `CHECKLIST.md` - Passo a passo
 
 📦 **Código**
+
 - `src/supabaseClient.js` - Configuração do BD
 - `.env` - Variáveis de ambiente (preenchida por você)
 - `.env.example` - Template
 - `vercel.json` - Configuração do Vercel
 
 🔧 **Configuração**
+
 - `.gitignore` - Atualizado com `.env`
 
 ---
@@ -99,13 +107,13 @@ git push origin main
 
 ## Custos
 
-| Serviço | Preço | Por quê? |
-|---------|-------|---------|
-| **Supabase** | Grátis | 500MB é suficiente |
-| **Vercel** | Grátis | Suporta seu site |
-| **Domínio** | Grátis | `.vercel.app` |
-| **Banco de Dados** | Grátis | PostgreSQL gratuito |
-| **TOTAL** | **R$ 0** | 100% Gratuito! 🎉 |
+| Serviço            | Preço    | Por quê?            |
+| ------------------ | -------- | ------------------- |
+| **Supabase**       | Grátis   | 500MB é suficiente  |
+| **Vercel**         | Grátis   | Suporta seu site    |
+| **Domínio**        | Grátis   | `.vercel.app`       |
+| **Banco de Dados** | Grátis   | PostgreSQL gratuito |
+| **TOTAL**          | **R$ 0** | 100% Gratuito! 🎉   |
 
 ---
 
@@ -114,18 +122,22 @@ git push origin main
 Se quiser evoluir no futuro:
 
 🔐 **Autenticação**
+
 - Saber quem adicionou cada item
 - Editar apenas seus itens
 
 📊 **Analytics**
+
 - Ver quantas pessoas acessaram
 - Qual item mais popular
 
 🔔 **Notificações**
+
 - Email quando alguém adiciona algo
 - SMS (opcional)
 
 🎨 **Temas**
+
 - Tema para Ano Novo
 - Tema para Aniversários
 
@@ -147,23 +159,27 @@ Se quiser evoluir no futuro:
 ## Instruções Rápidas
 
 ### Começar (Já está feito!)
+
 ```bash
 npm install
 ```
 
 ### Desenvolver Localmente
+
 ```bash
 npm run dev
 # http://localhost:5173
 ```
 
 ### Build para Produção
+
 ```bash
 npm run build
 # Gera pasta 'dist' otimizada
 ```
 
 ### Deploy
+
 ```bash
 git add .
 git commit -m "feat: Add Supabase"
