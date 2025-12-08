@@ -318,6 +318,7 @@ function ExpenseCalculator() {
     const [totalPeople] = useState(10);
     const [foodItemsByPerson, setFoodItemsByPerson] = useState({});
     const [isAfterEvent, setIsAfterEvent] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Verificar se é após 25 de dezembro às 18h
     useEffect(() => {
@@ -332,7 +333,7 @@ function ExpenseCalculator() {
         return () => clearInterval(interval);
     }, []);
 
-    // Carregaritens de comida do Supabase para associar a cada pessoa
+    // Carregar itens de comida e gastos do Supabase
     useEffect(() => {
         const loadFoodItemsForCalculator = async () => {
             const { data, error } = await supabase
@@ -344,7 +345,6 @@ function ExpenseCalculator() {
                 const itemsByPerson = {};
                 data.forEach(item => {
                     if (item.person) {
-                        // Se a pessoa já tem um item, concatenar (em caso de múltiplos)
                         itemsByPerson[item.person] = item.name;
                     }
                 });
@@ -352,10 +352,24 @@ function ExpenseCalculator() {
             }
         };
 
-        loadFoodItemsForCalculator();
+        const loadExpenses = async () => {
+            setIsLoading(true);
+            const { data, error } = await supabase
+                .from('expenses')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        // Subscribe para atualizações em tempo real
-        const subscription = supabase
+            if (!error && data) {
+                setExpenses(data);
+            }
+            setIsLoading(false);
+        };
+
+        loadFoodItemsForCalculator();
+        loadExpenses();
+
+        // Subscribe para atualizações em tempo real de comida
+        const foodSubscription = supabase
             .channel('food_items_calculator')
             .on(
                 'postgres_changes',
@@ -366,7 +380,22 @@ function ExpenseCalculator() {
             )
             .subscribe();
 
-        return () => subscription.unsubscribe();
+        // Subscribe para atualizações em tempo real de gastos
+        const expenseSubscription = supabase
+            .channel('expenses_calculator')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'expenses' },
+                () => {
+                    loadExpenses();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            foodSubscription.unsubscribe();
+            expenseSubscription.unsubscribe();
+        };
     }, []);
 
     const selectedPerson = newExpense.selectedPerson ? participants.find(p => p.name === newExpense.selectedPerson) : null;
@@ -380,23 +409,63 @@ function ExpenseCalculator() {
         });
     };
 
-    const addExpense = () => {
+    const addExpense = async () => {
         if (newExpense.selectedPerson && newExpense.foodItem && newExpense.amount) {
-            const expense = {
-                id: Date.now(),
-                name: newExpense.selectedPerson,
-                amount: parseFloat(newExpense.amount),
-                foodItem: newExpense.foodItem,
-                image: newExpense.imagePreview,
-                date: new Date().toLocaleDateString('pt-BR')
-            };
-            setExpenses([...expenses, expense]);
-            setNewExpense({ selectedPerson: '', foodItem: '', amount: '', image: null, imagePreview: null });
+            try {
+                let imagePath = null;
+
+                // Se tiver imagem, fazer upload para Supabase Storage
+                if (newExpense.image) {
+                    const fileExt = newExpense.image.name.split('.').pop();
+                    const fileName = `${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('expense-receipts')
+                        .upload(`public/${fileName}`, newExpense.image);
+
+                    if (!uploadError) {
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('expense-receipts')
+                            .getPublicUrl(`public/${fileName}`);
+                        imagePath = publicUrl;
+                    }
+                }
+
+                // Inserir gasto no Supabase
+                const { data, error } = await supabase
+                    .from('expenses')
+                    .insert([
+                        {
+                            name: newExpense.selectedPerson,
+                            amount: parseFloat(newExpense.amount),
+                            food_item: newExpense.foodItem,
+                            image_url: imagePath,
+                            created_at: new Date().toISOString()
+                        }
+                    ])
+                    .select();
+
+                if (!error && data) {
+                    setNewExpense({ selectedPerson: '', foodItem: '', amount: '', image: null, imagePreview: null });
+                }
+            } catch (err) {
+                console.error('Erro ao adicionar gasto:', err);
+            }
         }
     };
 
-    const deleteExpense = (id) => {
-        setExpenses(expenses.filter(e => e.id !== id));
+    const deleteExpense = async (id) => {
+        try {
+            const { error } = await supabase
+                .from('expenses')
+                .delete()
+                .eq('id', id);
+
+            if (!error) {
+                setExpenses(expenses.filter(e => e.id !== id));
+            }
+        } catch (err) {
+            console.error('Erro ao deletar gasto:', err);
+        }
     };
 
     const handleImageUpload = (e) => {
@@ -472,223 +541,227 @@ function ExpenseCalculator() {
 
             {!isAfterEvent && (
                 <div style={{ background: 'rgba(255,215,0,0.15)', border: '2px solid #ffd700', borderRadius: '12px', padding: '20px', marginBottom: '30px', textAlign: 'center' }}>
-                    <p style={{ color: '#ffd700', fontSize: '1.1rem', fontWeight: 'bold', margin: '0 0 10px 0' }}>🎄 Evento ainda não começou!</p>
-                    <p style={{ color: '#fff', margin: '0 0 15px 0' }}>A Calculadora de Gastos estará disponível após o evento, no dia 25 de dezembro às 18h.</p>
-                    <p style={{ color: '#ccc', fontSize: '0.9rem', margin: '0' }}>Volte mais tarde para fazer os acertos de contas! 💳</p>
+                    <p style={{ color: '#ffd700', fontSize: '1.1rem', fontWeight: 'bold', margin: '0 0 10px 0' }}>📝 Alimentando os dados...</p>
+                    <p style={{ color: '#fff', margin: '0 0 15px 0' }}>Os cálculos de quem deve pagar/receber serão mostrados a partir de 25 de dezembro às 18h.</p>
+                    <p style={{ color: '#ccc', fontSize: '0.9rem', margin: '0' }}>Todos os gastos registrados aqui serão considerados no acerto de contas! 💰</p>
                 </div>
             )}
 
-            {isAfterEvent && (
-                <>
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '2px solid rgba(255,215,0,0.2)' }}>
-                    <h3 style={{ color: '#fff', marginBottom: '15px' }}>Adicionar Gasto</h3>
-                    
-                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                        <select
-                            value={newExpense.selectedPerson}
-                            onChange={(e) => handlePersonSelect(e.target.value)}
-                            style={{ flex: 1, minWidth: '150px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
-                        >
-                            <option value="" style={{ background: '#2a0a10', color: '#fff' }}>Selecione uma pessoa...</option>
-                            {participants.map(person => (
-                                <option key={person.id} value={person.name} style={{ background: '#2a0a10', color: '#fff' }}>
-                                    {person.name}
-                                </option>
-                            ))}
-                        </select>
-                        <input
-                            type="text"
-                            placeholder="O que vai levar? (ex: Pudim, Mousse)"
-                            value={newExpense.foodItem}
-                            onChange={(e) => setNewExpense({ ...newExpense, foodItem: e.target.value })}
-                            style={{ flex: 1, minWidth: '150px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                        <input
-                            type="number"
-                            placeholder="Valor (€)"
-                            value={newExpense.amount}
-                            onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                            step="0.01"
-                            style={{ flex: 1, minWidth: '120px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', alignItems: 'center' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#fff' }}>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                style={{ display: 'none' }}
-                            />
-                            📸 Fatura (Opcional)
-                        </label>
-                        {newExpense.imagePreview && (
-                            <span style={{ color: '#90EE90', fontSize: '0.9rem' }}>✓ Imagem selecionada</span>
-                        )}
-                    </div>
-
-                    {newExpense.imagePreview && (
-                        <img 
-                            src={newExpense.imagePreview} 
-                            alt="Preview" 
-                            style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: '8px', marginBottom: '15px', objectFit: 'cover' }}
-                        />
-                    )}
-
-                    <button
-                        onClick={addExpense}
-                        disabled={!newExpense.selectedPerson || !newExpense.foodItem || !newExpense.amount}
-                        style={{
-                            background: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : 'rgba(255,215,0,0.3)',
-                            color: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? '#000' : '#666',
-                            border: 'none',
-                            padding: '12px 30px',
-                            borderRadius: '8px',
-                            fontWeight: 'bold',
-                            cursor: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? 'pointer' : 'not-allowed',
-                            width: '100%'
-                        }}
-                        onMouseOver={(e) => {
-                            if (newExpense.selectedPerson && newExpense.foodItem && newExpense.amount) {
-                                e.target.style.transform = 'scale(1.02)';
-                            }
-                        }}
-                        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '2px solid rgba(255,215,0,0.2)' }}>
+                <h3 style={{ color: '#fff', marginBottom: '15px' }}>Adicionar Gasto</h3>
+                
+                <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                    <select
+                        value={newExpense.selectedPerson}
+                        onChange={(e) => handlePersonSelect(e.target.value)}
+                        style={{ flex: 1, minWidth: '150px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     >
-                        + Adicionar Gasto
-                    </button>
+                        <option value="" style={{ background: '#2a0a10', color: '#fff' }}>Selecione uma pessoa...</option>
+                        {participants.map(person => (
+                            <option key={person.id} value={person.name} style={{ background: '#2a0a10', color: '#fff' }}>
+                                {person.name}
+                            </option>
+                        ))}
+                    </select>
+                    <input
+                        type="text"
+                        placeholder="O que vai levar? (ex: Pudim, Mousse)"
+                        value={newExpense.foodItem}
+                        onChange={(e) => setNewExpense({ ...newExpense, foodItem: e.target.value })}
+                        style={{ flex: 1, minWidth: '150px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
-                    <div style={{ background: 'rgba(255,215,0,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #ffd700', textAlign: 'center' }}>
-                        <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Total Gasto</p>
-                        <h3 style={{ color: '#ffd700', fontSize: '1.8rem' }}>€ {totalSpent.toFixed(2)}</h3>
-                    </div>
-                    <div style={{ background: 'rgba(144,238,144,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #90EE90', textAlign: 'center' }}>
-                        <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Por Pessoa</p>
-                        <h3 style={{ color: '#90EE90', fontSize: '1.8rem' }}>€ {averagePerPerson.toFixed(2)}</h3>
-                    </div>
+                <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                    <input
+                        type="number"
+                        placeholder="Valor (€)"
+                        value={newExpense.amount}
+                        onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                        step="0.01"
+                        style={{ flex: 1, minWidth: '120px', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
                 </div>
 
-                {expenses.length > 0 && (
-                    <>
-                        <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>📋 Gastos Registrados</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
-                            {expenses.map(exp => (
-                                <div 
-                                    key={exp.id}
+                <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', alignItems: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#fff' }}>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            style={{ display: 'none' }}
+                        />
+                        📸 Fatura (Opcional)
+                    </label>
+                    {newExpense.imagePreview && (
+                        <span style={{ color: '#90EE90', fontSize: '0.9rem' }}>✓ Imagem selecionada</span>
+                    )}
+                </div>
+
+                {newExpense.imagePreview && (
+                    <img 
+                        src={newExpense.imagePreview} 
+                        alt="Preview" 
+                        style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: '8px', marginBottom: '15px', objectFit: 'cover' }}
+                    />
+                )}
+
+                <button
+                    onClick={addExpense}
+                    disabled={!newExpense.selectedPerson || !newExpense.foodItem || !newExpense.amount}
+                    style={{
+                        background: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : 'rgba(255,215,0,0.3)',
+                        color: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? '#000' : '#666',
+                        border: 'none',
+                        padding: '12px 30px',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        cursor: newExpense.selectedPerson && newExpense.foodItem && newExpense.amount ? 'pointer' : 'not-allowed',
+                        width: '100%'
+                    }}
+                    onMouseOver={(e) => {
+                        if (newExpense.selectedPerson && newExpense.foodItem && newExpense.amount) {
+                            e.target.style.transform = 'scale(1.02)';
+                        }
+                    }}
+                    onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                >
+                    + Adicionar Gasto
+                </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+                <div style={{ background: 'rgba(255,215,0,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #ffd700', textAlign: 'center' }}>
+                    <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Total Gasto</p>
+                    <h3 style={{ color: '#ffd700', fontSize: '1.8rem' }}>€ {totalSpent.toFixed(2)}</h3>
+                </div>
+                <div style={{ background: 'rgba(144,238,144,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #90EE90', textAlign: 'center' }}>
+                    <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Por Pessoa</p>
+                    <h3 style={{ color: '#90EE90', fontSize: '1.8rem' }}>€ {averagePerPerson.toFixed(2)}</h3>
+                </div>
+            </div>
+
+            {expenses.length > 0 && (
+                <>
+                    <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>📋 Gastos Registrados</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+                        {expenses.map(exp => (
+                            <div 
+                                key={exp.id}
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    padding: '15px',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(255,215,0,0.2)',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    gap: '15px'
+                                }}
+                            >
+                                <div style={{ flex: 1 }}>
+                                    <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '4px' }}>
+                                        {exp.name} {exp.food_item && `• ${exp.food_item}`}
+                                    </p>
+                                    <p style={{ color: '#ccc', fontSize: '0.85rem' }}>€ {exp.amount.toFixed(2)} • {new Date(exp.created_at).toLocaleDateString('pt-BR')}</p>
+                                    {exp.image_url && (
+                                        <img 
+                                            src={exp.image_url} 
+                                            alt="Fatura" 
+                                            style={{ maxWidth: '100px', maxHeight: '80px', borderRadius: '6px', marginTop: '8px', cursor: 'pointer', objectFit: 'cover' }}
+                                            onClick={() => window.open(exp.image_url)}
+                                        />
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => deleteExpense(exp.id)}
                                     style={{
-                                        background: 'rgba(255,255,255,0.05)',
+                                        background: 'rgba(255,69,0,0.2)',
+                                        border: 'none',
+                                        color: '#ff6347',
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontSize: '1.2rem'
+                                    }}
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {isAfterEvent && expenses.length > 0 && (
+                <>
+                    <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💸 Quem Deve Pagar/Receber</h3>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '2px solid rgba(144,238,144,0.2)', marginBottom: '30px' }}>
+                        {settlements.map(settlement => {
+                            const shouldPay = settlement.balance < -0.01;
+                            const isBalanced = Math.abs(settlement.balance) < 0.01;
+                            const absBalance = Math.abs(settlement.balance);
+                            
+                            return (
+                                <div key={settlement.name} style={{ marginBottom: '12px', padding: '12px', background: shouldPay ? 'rgba(255,69,0,0.1)' : isBalanced ? 'rgba(100,200,100,0.1)' : 'rgba(144,238,144,0.1)', borderRadius: '8px', border: `1px solid ${shouldPay ? '#ff6347' : isBalanced ? '#90EE90' : '#90EE90'}` }}>
+                                    <p style={{ color: '#fff', marginBottom: '4px' }}>
+                                        <strong>{settlement.name}</strong> - Gastou: € {settlement.spent.toFixed(2)}
+                                    </p>
+                                    {isBalanced ? (
+                                        <p style={{ color: '#90EE90', fontSize: '0.95rem' }}>✅ Equilibrado!</p>
+                                    ) : shouldPay ? (
+                                        <p style={{ color: '#ff6347', fontSize: '0.95rem' }}>💵 Deve pagar: <strong>€ {absBalance.toFixed(2)}</strong></p>
+                                    ) : (
+                                        <p style={{ color: '#90EE90', fontSize: '0.95rem' }}>💰 Deve receber: <strong>€ {absBalance.toFixed(2)}</strong></p>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Acertos de Contas</h3>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '2px solid rgba(100,149,237,0.3)' }}>
+                        {transfers.length > 0 ? (
+                            transfers.map((transfer, idx) => (
+                                <div 
+                                    key={idx}
+                                    style={{
+                                        marginBottom: '12px',
                                         padding: '15px',
-                                        borderRadius: '10px',
-                                        border: '1px solid rgba(255,215,0,0.2)',
+                                        background: 'rgba(100,149,237,0.1)',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(100,149,237,0.5)',
                                         display: 'flex',
-                                        justifyContent: 'space-between',
                                         alignItems: 'center',
                                         gap: '15px'
                                     }}
                                 >
                                     <div style={{ flex: 1 }}>
-                                        <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '4px' }}>
-                                            {exp.name} {exp.foodItem && `• ${exp.foodItem}`}
+                                        <p style={{ color: '#fff', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '0.95rem' }}>
+                                            {transfer.from} → {transfer.to}
                                         </p>
-                                        <p style={{ color: '#ccc', fontSize: '0.85rem' }}>€ {exp.amount.toFixed(2)} • {exp.date}</p>
-                                        {exp.image && (
-                                            <img 
-                                                src={exp.image} 
-                                                alt="Fatura" 
-                                                style={{ maxWidth: '100px', maxHeight: '80px', borderRadius: '6px', marginTop: '8px', cursor: 'pointer', objectFit: 'cover' }}
-                                                onClick={() => window.open(exp.image)}
-                                            />
-                                        )}
+                                        <p style={{ color: '#6495ed', margin: '0', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                                            € {transfer.amount.toFixed(2)}
+                                        </p>
                                     </div>
-                                    <button
-                                        onClick={() => deleteExpense(exp.id)}
-                                        style={{
-                                            background: 'rgba(255,69,0,0.2)',
-                                            border: 'none',
-                                            color: '#ff6347',
-                                            padding: '8px 12px',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontSize: '1.2rem'
-                                        }}
-                                    >
-                                        🗑️
-                                    </button>
+                                    <div style={{ fontSize: '2rem' }}>💶</div>
                                 </div>
-                            ))}
-                        </div>
-                    </>
-                )}
-
-                {expenses.length > 0 && (
-                    <>
-                        <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💸 Quem Deve Pagar/Receber</h3>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '2px solid rgba(144,238,144,0.2)', marginBottom: '30px' }}>
-                            {settlements.map(settlement => {
-                                const shouldPay = settlement.balance < -0.01; // Gastou menos que a média
-                                const isBalanced = Math.abs(settlement.balance) < 0.01;
-                                const absBalance = Math.abs(settlement.balance);
-                                
-                                return (
-                                    <div key={settlement.name} style={{ marginBottom: '12px', padding: '12px', background: shouldPay ? 'rgba(255,69,0,0.1)' : isBalanced ? 'rgba(100,200,100,0.1)' : 'rgba(144,238,144,0.1)', borderRadius: '8px', border: `1px solid ${shouldPay ? '#ff6347' : isBalanced ? '#90EE90' : '#90EE90'}` }}>
-                                        <p style={{ color: '#fff', marginBottom: '4px' }}>
-                                            <strong>{settlement.name}</strong> - Gastou: € {settlement.spent.toFixed(2)}
-                                        </p>
-                                        {isBalanced ? (
-                                            <p style={{ color: '#90EE90', fontSize: '0.95rem' }}>✅ Equilibrado!</p>
-                                        ) : shouldPay ? (
-                                            <p style={{ color: '#ff6347', fontSize: '0.95rem' }}>💵 Deve pagar: <strong>€ {absBalance.toFixed(2)}</strong></p>
-                                        ) : (
-                                            <p style={{ color: '#90EE90', fontSize: '0.95rem' }}>💰 Deve receber: <strong>€ {absBalance.toFixed(2)}</strong></p>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Acertos de Contas</h3>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '2px solid rgba(100,149,237,0.3)' }}>
-                            {transfers.length > 0 ? (
-                                transfers.map((transfer, idx) => (
-                                    <div 
-                                        key={idx}
-                                        style={{
-                                            marginBottom: '12px',
-                                            padding: '15px',
-                                            background: 'rgba(100,149,237,0.1)',
-                                            borderRadius: '8px',
-                                            border: '1px solid rgba(100,149,237,0.5)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '15px'
-                                        }}
-                                    >
-                                        <div style={{ flex: 1 }}>
-                                            <p style={{ color: '#fff', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '0.95rem' }}>
-                                                {transfer.from} → {transfer.to}
-                                            </p>
-                                            <p style={{ color: '#6495ed', margin: '0', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                                                € {transfer.amount.toFixed(2)}
-                                            </p>
-                                        </div>
-                                        <div style={{ fontSize: '2rem' }}>💶</div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p style={{ color: '#ccc', textAlign: 'center', margin: '0', fontSize: '0.95rem' }}>
-                                    Nenhuma transferência necessária (tudo equilibrado!)
-                                </p>
-                            )}
-                        </div>
-                    </>
-                )}
+                            ))
+                        ) : (
+                            <p style={{ color: '#ccc', textAlign: 'center', margin: '0', fontSize: '0.95rem' }}>
+                                Nenhuma transferência necessária (tudo equilibrado!)
+                            </p>
+                        )}
+                    </div>
                 </>
+            )}
+
+            {!isAfterEvent && expenses.length > 0 && (
+                <div style={{ background: 'rgba(255,215,0,0.15)', border: '2px solid #ffd700', borderRadius: '12px', padding: '20px', marginBottom: '30px', textAlign: 'center' }}>
+                    <p style={{ color: '#ffd700', fontSize: '1.1rem', fontWeight: 'bold', margin: '0 0 10px 0' }}>⏰ Em breve...</p>
+                    <p style={{ color: '#fff', margin: '0 0 15px 0' }}>Os painéis "Quem Deve Pagar/Receber" e "Acertos de Contas" aparecerão após o evento, no dia 25 de dezembro às 18h.</p>
+                    <p style={{ color: '#ccc', fontSize: '0.9rem', margin: '0' }}>Continue alimentando os dados! 📝</p>
+                </div>
             )}
         </div>
     );
