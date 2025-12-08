@@ -21,7 +21,7 @@ export const participants = [
         name: "Samuel Mendes",
         avatar: "/fotos/samuel.jpg.jpeg",
         gifts: [
-            { id: '2-1', type: 'link', content: 'https://www.amazon.es/-/pt/gp/product/B09B37FKVB/ref=ox_sc_act_title_2?smid=AT5KFBC11XHGJ&psc=1', description: 'Despertador de Luz/Solar' },
+            { id: '2-1', type: 'link', content: 'https://amzn.eu/d/fffRoIq', description: 'Despertador de Luz/Solar' },
             { id: '2-2', type: 'link', content: 'https://pt.aliexpress.com/item/1005010426898772.html', description: 'Lego Ferrari F1 (AliExpress) - (Promoção, links confiáveis. Dica: conta nova pega desconto!)' },
             { id: '2-3', type: 'link', content: 'https://pt.aliexpress.com/item/1005010047937392.html', description: 'Opção Lego 2' },
             { id: '2-4', type: 'link', content: 'https://pt.aliexpress.com/item/1005010457984369.html', description: 'Opção Lego 3' },
