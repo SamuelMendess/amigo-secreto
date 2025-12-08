@@ -5,17 +5,20 @@
 Você agora tem um **sistema completo de Amigo Secreto** com:
 
 ### ✨ **Frontend (Já Funciona!)**
+
 - Contagem regressiva animada para o Natal
 - Cards de participantes interativos
 - Modal com lista de presentes
 - **Mural da Ceia com sincronização em tempo real** ⭐
 
 ### 🗄️ **Backend (Supabase - Precisa Configurar)**
+
 - Banco de dados PostgreSQL na nuvem
 - Sincronização em tempo real com WebSockets
 - Dados salvos permanentemente
 
 ### 🚀 **Pronto para Deploy**
+
 - Configuração Vercel incluída
 - Documentação completa
 - Script de setup
@@ -25,12 +28,14 @@ Você agora tem um **sistema completo de Amigo Secreto** com:
 ## 📋 O Problema Que Você Solucionou
 
 **ANTES:**
-- "Estou trazendo pudim!" 
+
+- "Estou trazendo pudim!"
 - Fecha a página
 - Próximo dia, não lembra ou perdeu a nota
 - Outros não sabem o que foi combinado
 
 **DEPOIS:**
+
 - "Estou trazendo pudim!"
 - Clica em "Adicionar"
 - Todo mundo vê em tempo real
@@ -42,15 +47,18 @@ Você agora tem um **sistema completo de Amigo Secreto** com:
 ## 📁 Arquivos Importantes
 
 ### Para Começar
+
 - **LEIA_PRIMEIRO.txt** - Abra AGORA! (visual bonitão)
 - **SUPABASE_SETUP.md** - Guia de setup (super detalhe)
 
 ### Para Usar
+
 - **COMECE_AQUI.md** - Overview rápido
 - **DEPLOYMENT.md** - Como publicar
 - **CHECKLIST.md** - Não esqueça nada!
 
 ### Para Desenvolver
+
 - **src/supabaseClient.js** - Config Supabase
 - **.env** - Variáveis (você preenche)
 - **vercel.json** - Config deploy
@@ -60,6 +68,7 @@ Você agora tem um **sistema completo de Amigo Secreto** com:
 ## 🎯 3 Passos Finais
 
 ### Passo 1: Setup Supabase (7 min)
+
 ```
 1. Abrir https://supabase.com
 2. Criar conta
@@ -69,12 +78,14 @@ Você agora tem um **sistema completo de Amigo Secreto** com:
 ```
 
 ### Passo 2: Testar Localmente (3 min)
+
 ```bash
 npm run dev
 # Vai abrir em http://localhost:5173
 ```
 
 ### Passo 3: Publicar (5 min)
+
 ```bash
 git add .
 git commit -m "feat: Add Supabase"
@@ -105,12 +116,12 @@ git push origin main
 
 ## 💰 Custo
 
-| Item | Preço |
-|------|-------|
-| Supabase | Grátis (500MB) |
-| Vercel | Grátis |
-| Domínio | Grátis (.vercel.app) |
-| **Total** | **R$ 0/mês** |
+| Item      | Preço                |
+| --------- | -------------------- |
+| Supabase  | Grátis (500MB)       |
+| Vercel    | Grátis               |
+| Domínio   | Grátis (.vercel.app) |
+| **Total** | **R$ 0/mês**         |
 
 ---
 
@@ -125,6 +136,7 @@ Este projeto usa chaves públicas (anon) do Supabase, o que é ok para dados pú
 ## 🎊 Resultado Final
 
 Seu site terá:
+
 - 🌍 URL pública (https://seu-projeto.vercel.app)
 - ⚡ Muito rápido (< 1 segundo)
 - 🔄 Sincronizado em tempo real

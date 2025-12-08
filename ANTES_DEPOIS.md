@@ -37,7 +37,7 @@ HOJE: Transformamos em um sistema completo! 🚀
 const [foodItems, setFoodItems] = useState({
   salgados: [],
   doces: [],
-  bebidas: []
+  bebidas: [],
 });
 
 // Quando você adiciona:
@@ -64,6 +64,7 @@ const [foodItems, setFoodItems] = useState({...});
 ## Fluxo de Dados
 
 ### ❌ ANTES
+
 ```
   Você                Seu Navegador            (Nada aqui)
     │                     │
@@ -76,6 +77,7 @@ const [foodItems, setFoodItems] = useState({...});
 ```
 
 ### ✅ DEPOIS
+
 ```
   Samuel              Seu Navegador           Supabase (Nuvem)
     │                     │                        │
@@ -103,31 +105,33 @@ const [foodItems, setFoodItems] = useState({...});
 ### Cenário 1: Samuel Adiciona Pudim
 
 **ANTES:**
+
 ```
 21:30 - Samuel: "Vou trazer pudim"
         Adiciona no Mural da sua casa
         Tá vendo lá no seu computador
-        
+
 22:00 - Samuel fecha o navegador
-        
+
 Próximo dia:
 - Samuel: "Falei que ia trazer pudim, não é?"
 - Lica: "Você falou? Não vi nada aqui..."
 ```
 
 **DEPOIS:**
+
 ```
 21:30 - Samuel: "Vou trazer pudim"
         Clica em "+ Adicionar"
         Preenche: "Pudim | Samuel"
         Clica em ✓
-        
+
         🚀 Enviado para Supabase
         💾 Salvo no banco de dados
         📱 Sincroniza em tempo real
-        
+
 22:00 - Samuel fecha o navegador
-        
+
 Próximo dia:
 - Lica acessa o site
 - Pudim de Samuel tá lá!
@@ -137,28 +141,30 @@ Próximo dia:
 ### Cenário 2: Todos Acessam Ao Mesmo Tempo
 
 **ANTES:**
+
 ```
 21:30 - Samuel adiciona Pudim
         Lica vê: "Vinicius vai trazer Refrigerante"
-        
+
 Samuel refresh a página
-        Lica vê: mudou tudo! 
+        Lica vê: mudou tudo!
         "Como? Não era refrigerante?"
-        
+
 Confusão total 😵
 ```
 
 **DEPOIS:**
+
 ```
 21:30 - Samuel adiciona Pudim
         ✅ Salva no banco
-        
+
 21:31 - Lica acessa o site
         ✅ Vê Pudim de Samuel em tempo real
-        
+
 21:32 - Tom adiciona Vinho
         ✅ Salva no banco
-        
+
 21:33 - Samuel, Lica e Tom veem TUDO igual
         Sem confusão, tudo sincronizado! 🎉
 ```
@@ -168,12 +174,14 @@ Confusão total 😵
 ## Tecnicamente Falando
 
 ### ❌ ANTES
+
 - React State (apenas em memória)
 - Cada navegador isolado
 - Sem persistência
 - Sem sync
 
 ### ✅ DEPOIS
+
 - React State (UI)
 - Supabase Client (Comunicação)
 - PostgreSQL Database (Persistência)
@@ -200,22 +208,27 @@ Confusão total 😵
 ## Impacto nos Usuários
 
 ### Performance
+
 - ✅ **ANTES:** Rápido (tudo local)
 - ✅ **DEPOIS:** Mais rápido ainda! (cache + CDN Vercel)
 
 ### Confiabilidade
+
 - ❌ **ANTES:** Perde dados ao fechar
 - ✅ **DEPOIS:** Dados salvos para sempre
 
 ### Sincronização
+
 - ❌ **ANTES:** Cada um vê diferente
 - ✅ **DEPOIS:** Todos veem igual em tempo real
 
 ### Facilidade
+
 - ❌ **ANTES:** Precisa enviar screenshot
 - ✅ **DEPOIS:** Só compartilhar a URL
 
 ### Custo
+
 - ✅ **ANTES:** R$ 0
 - ✅ **DEPOIS:** R$ 0 (gratuito!)
 
@@ -223,23 +236,24 @@ Confusão total 😵
 
 ## Estatísticas
 
-| Métrica | ANTES | DEPOIS |
-|---------|-------|--------|
-| Linhas de código | 500 | 1300+ |
-| Componentes | 4 | 6 |
-| Integração cloud | ❌ | ✅ |
-| Database | ❌ | ✅ |
-| Real-time sync | ❌ | ✅ |
-| Persistência | ❌ | ✅ |
-| Deploy-ready | ❌ | ✅ |
-| Documentação | Básica | Completa |
-| Custo mensal | R$ 0 | R$ 0 |
+| Métrica          | ANTES  | DEPOIS   |
+| ---------------- | ------ | -------- |
+| Linhas de código | 500    | 1300+    |
+| Componentes      | 4      | 6        |
+| Integração cloud | ❌     | ✅       |
+| Database         | ❌     | ✅       |
+| Real-time sync   | ❌     | ✅       |
+| Persistência     | ❌     | ✅       |
+| Deploy-ready     | ❌     | ✅       |
+| Documentação     | Básica | Completa |
+| Custo mensal     | R$ 0   | R$ 0     |
 
 ---
 
 ## O Que Mudou Visualmente?
 
 ### Para você (Desenvolvedor):
+
 ```
 Antes:
 - src/App.jsx ................... 185 linhas
@@ -254,6 +268,7 @@ Depois:
 ```
 
 ### Para seus usuários:
+
 ```
 Antes:
 - Site bonito ..................  ✅
@@ -295,6 +310,7 @@ Agora você tem um site **produção-ready** com:
 ✅ Pronto para Vercel
 
 Falta só:
+
 1. Criar conta Supabase (5 min)
 2. Fazer deploy (5 min)
 

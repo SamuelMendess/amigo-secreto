@@ -29,16 +29,19 @@
 ## 🚀 Deploy Timeline
 
 ### Agora (5 minutos)
+
 - [ ] Criar conta no Supabase (https://supabase.com)
 - [ ] Criar tabela seguindo o guia SUPABASE_SETUP.md
 - [ ] Preencher `.env` com credenciais
 
 ### Teste Local (5 minutos)
+
 - [ ] Rodar `npm run dev`
 - [ ] Testar adicionar/remover itens
 - [ ] Abrir em 2 abas e verificar sync
 
 ### Deploy (3 minutos)
+
 - [ ] Fazer commit: `git add . && git commit -m "Add Supabase"`
 - [ ] Push: `git push origin main`
 - [ ] Vercel faz deploy automático
@@ -48,16 +51,16 @@
 
 ## 📱 Funcionalidades
 
-| Feature | Status | Onde Usa |
-|---------|--------|----------|
-| Cards dos Participantes | ✅ | Home |
-| Lista de Presentes | ✅ | Modal do Participante |
-| Contagem Regressiva | ✅ | Header |
-| Mural da Ceia | ✅ | Rodapé |
-| Sincronização em Tempo Real | ✅ | Mural |
-| Salvar no Banco | ✅ | Supabase |
-| Remover Itens | ✅ | Mural |
-| Responsivo | ✅ | Todos os dispositivos |
+| Feature                     | Status | Onde Usa              |
+| --------------------------- | ------ | --------------------- |
+| Cards dos Participantes     | ✅     | Home                  |
+| Lista de Presentes          | ✅     | Modal do Participante |
+| Contagem Regressiva         | ✅     | Header                |
+| Mural da Ceia               | ✅     | Rodapé                |
+| Sincronização em Tempo Real | ✅     | Mural                 |
+| Salvar no Banco             | ✅     | Supabase              |
+| Remover Itens               | ✅     | Mural                 |
+| Responsivo                  | ✅     | Todos os dispositivos |
 
 ## 🔐 Segurança
 
@@ -67,11 +70,11 @@
 
 ## 💰 Custo
 
-| Serviço | Preço | Motivo |
-|---------|-------|--------|
-| Supabase | Gratuito | 500MB limite (mais que suficiente) |
-| Vercel | Gratuito | Suporta até 100 deploys/mês |
-| **Total** | **$0/mês** | Perfeito para um projeto! |
+| Serviço   | Preço      | Motivo                             |
+| --------- | ---------- | ---------------------------------- |
+| Supabase  | Gratuito   | 500MB limite (mais que suficiente) |
+| Vercel    | Gratuito   | Suporta até 100 deploys/mês        |
+| **Total** | **$0/mês** | Perfeito para um projeto!          |
 
 ## 🎯 Próximos Passos (Opcionais)
 
@@ -86,6 +89,7 @@ Se quiser evoluir depois:
 ## 📞 Suporte
 
 Se algo não funcionar:
+
 1. Leia o `SUPABASE_SETUP.md` com atenção
 2. Verifique o console do navegador (F12)
 3. Verifique se o `.env` tem as credenciais corretas
@@ -94,6 +98,7 @@ Se algo não funcionar:
 ## 🎊 Resultado Final
 
 Você terá um site:
+
 - 🌍 Acessível de qualquer lugar do mundo
 - ⚡ Rápido e responsivo
 - 🔄 Sincronizado em tempo real

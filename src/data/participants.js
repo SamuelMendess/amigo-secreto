@@ -109,7 +109,7 @@ export const participants = [
     {
         id: 10,
         name: "Patricia (Pati)",
-        avatar: "https://api.dicebear.com/7.x/notionists/svg?seed=Patricia&backgroundColor=ffb703",
+        avatar: "/fotos/pati.jpg",
         gifts: [
             { id: '10-1', type: 'text', content: 'Copo térmico grande' },
             { id: '10-2', type: 'text', content: 'Pantufas (36BR / 38EU)' },

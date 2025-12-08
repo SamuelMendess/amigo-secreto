@@ -19,7 +19,6 @@
    └─ Cenários de uso
    └─ Impacto técnico
 
-
 📚 DOCUMENTAÇÃO DETALHADA
 ────────────────────────────────────────────────────────────────────────────────
 
@@ -46,7 +45,6 @@
    └─ Instruções para usuários
    └─ Dicas de uso
 
-
 📋 RESUMOS
 ────────────────────────────────────────────────────────────────────────────────
 
@@ -58,7 +56,6 @@
 
 9. Este arquivo (INDEX)
    └─ Você está lendo agora!
-
 
 ⚙️ ARQUIVOS TÉCNICOS
 ────────────────────────────────────────────────────────────────────────────────
@@ -81,7 +78,6 @@ Build:
 ├─ index.html ...................... HTML principal
 └─ vite.config.js .................. Configuração build
 
-
 📁 PASTAS
 ────────────────────────────────────────────────────────────────────────────────
 
@@ -91,30 +87,26 @@ src/ .............................. Código fonte
 └─ public/ ........................ Imagens das pessoas
 dist/ ............................ Build final (gerado com npm run build)
 
-
 🔄 FLUXO RECOMENDADO
 ────────────────────────────────────────────────────────────────────────────────
 
 Para Iniciante:
+
 1. LEIA_PRIMEIRO.txt
    └─ Visão geral
-   
 2. SUPABASE_SETUP.md
    └─ Fazer setup
-   
 3. DEPLOYMENT.md
    └─ Publicar
 
 Para Desenvolvedor:
+
 1. ANTES_DEPOIS.md
    └─ Entender mudanças
-   
 2. src/supabaseClient.js
    └─ Ver integração
-   
 3. src/App.jsx (FoodWall component)
    └─ Ver implementação
-
 
 📱 COMO USAR O SITE
 ────────────────────────────────────────────────────────────────────────────────
@@ -129,7 +121,6 @@ Para Desenvolvedor:
 8. Pronto! Todos veem!
 
 Ver mais detalhes em: README_PT.md
-
 
 🚀 RESUMO DOS PASSOS FINAIS
 ────────────────────────────────────────────────────────────────────────────────
@@ -153,7 +144,6 @@ PASSO 3: PUBLICAR (5 min)
 
 TOTAL: 15 minutos ⏱️
 
-
 💰 CUSTO
 ────────────────────────────────────────────────────────────────────────────────
 
@@ -163,7 +153,6 @@ Domínio .................... GRÁTIS (.vercel.app)
 Dados/Bandwidth ............ GRÁTIS
 ────────────────────────────
 TOTAL POR MÊS .............. R$ 0 ✅
-
 
 ❓ ENCONTROU UM PROBLEMA?
 ────────────────────────────────────────────────────────────────────────────────
@@ -180,7 +169,6 @@ TOTAL POR MÊS .............. R$ 0 ✅
 4. Dúvida sobre uso?
    └─ Leia: README_PT.md
 
-
 📊 STATUS DO PROJETO
 ────────────────────────────────────────────────────────────────────────────────
 
@@ -189,10 +177,9 @@ Backend ........... 🔵 CONFIGURAR (Supabase)
 Testes ............ 🔵 TESTAR (Quando fizer Supabase)
 Deploy ............ 🔵 PUBLICAR (Quando tudo funcionar)
 
-Progresso Total:   ████████░░ 80%
+Progresso Total: ████████░░ 80%
 
-Próximo passo:     👉 Abra SUPABASE_SETUP.md
-
+Próximo passo: 👉 Abra SUPABASE_SETUP.md
 
 🎊 PARABÉNS!
 ────────────────────────────────────────────────────────────────────────────────
@@ -207,9 +194,9 @@ Você tem um SITE PROFISSIONAL pronto para produção com:
 ✨ Pronto para publicar
 
 Agora é só:
-1️⃣  Setup Supabase (copiar/colar SQL)
-2️⃣  Preencher .env
-3️⃣  Git push
+1️⃣ Setup Supabase (copiar/colar SQL)
+2️⃣ Preencher .env
+3️⃣ Git push
 
 E seu site estará ONLINE para o mundo inteiro! 🌍
 

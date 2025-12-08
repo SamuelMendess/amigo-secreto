@@ -18,11 +18,13 @@
 Você vai precisar fazer isso uma única vez:
 
 ### 1️⃣ Criar Conta
+
 - [ ] Acessar https://supabase.com
 - [ ] Fazer Sign Up com GitHub ou Email
 - [ ] Confirmar email
 
 ### 2️⃣ Criar Projeto
+
 - [ ] Clicar "New Project"
 - [ ] Nome: `amigo-secreto`
 - [ ] Definir senha
@@ -30,6 +32,7 @@ Você vai precisar fazer isso uma única vez:
 - [ ] Aguardar criação (2-3 minutos)
 
 ### 3️⃣ Criar Tabela
+
 - [ ] Ir para SQL Editor
 - [ ] Nova Query
 - [ ] Colar o SQL (veja SUPABASE_SETUP.md)
@@ -37,6 +40,7 @@ Você vai precisar fazer isso uma única vez:
 - [ ] Verificar se foi criada
 
 ### 4️⃣ Copiar Credenciais
+
 - [ ] Ir para Settings → API
 - [ ] Copiar "Project URL"
 - [ ] Copiar "anon public"
@@ -117,12 +121,12 @@ Produção ........... 🟡 NÃO INICIADO
 
 ## 💡 Tempo Estimado
 
-| Etapa | Tempo |
-|-------|-------|
-| Supabase Setup | 10 min |
-| Testes Locais | 5 min |
-| Deploy Vercel | 5 min |
-| **TOTAL** | **20 min** |
+| Etapa          | Tempo      |
+| -------------- | ---------- |
+| Supabase Setup | 10 min     |
+| Testes Locais  | 5 min      |
+| Deploy Vercel  | 5 min      |
+| **TOTAL**      | **20 min** |
 
 ---
 
@@ -135,13 +139,14 @@ Após completar tudo, você terá:
 ✨ Acessível pelo mundo inteiro  
 ✨ Que salva dados permanentemente  
 ✨ 100% gratuito  
-✨ Com domínio `.vercel.app`  
+✨ Com domínio `.vercel.app`
 
 ---
 
 ## 📞 Problemas?
 
 Leia os arquivos nesta ordem:
+
 1. `SUPABASE_SETUP.md` - Para setup do banco
 2. `DEPLOYMENT.md` - Para deploy
 3. `README_PT.md` - Para uso geral
