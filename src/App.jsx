@@ -28,10 +28,19 @@ function Countdown() {
     }, []);
 
     if (!timeLeft) {
+        const now = new Date();
+        const isChristmasDay = now.getMonth() === 11 && now.getDate() === 25;
+        const message = isChristmasDay 
+            ? '🎄 Feliz Natal! 🎄' 
+            : '🎄 Preparação para o Natal! 🎄';
+        const subMessage = isChristmasDay
+            ? 'Que este Natal seja cheio de alegria e presentes!'
+            : 'Os efeitos especiais começaram! Faltam poucos dias para o grande dia!';
+        
         return (
             <div className="countdown-finished">
-                <h2>🎄 Feliz Natal! 🎄</h2>
-                <p>Que este Natal seja cheio de alegria e presentes!</p>
+                <h2>{message}</h2>
+                <p>{subMessage}</p>
             </div>
         );
     }
@@ -302,6 +311,152 @@ function BackToTop() {
     );
 }
 
+// --- Christmas Special Effects Component ---
+function ChristmasEffects() {
+    const [isChristmas, setIsChristmas] = useState(false);
+    const [hasPlayedSound, setHasPlayedSound] = useState(false);
+
+    useEffect(() => {
+        const now = new Date();
+        const isChristmasSeasonStart = now.getMonth() === 11 && now.getDate() >= 15;
+        setIsChristmas(isChristmasSeasonStart);
+
+        if (isChristmasSeasonStart && !hasPlayedSound) {
+            // Play bell sound
+            playBellSound();
+            setHasPlayedSound(true);
+        }
+    }, [hasPlayedSound]);
+
+    const playBellSound = () => {
+        // Create bell sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
+
+        for (let i = 0; i < 3; i++) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            osc.frequency.setValueAtTime(800 - i * 100, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+            
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            
+            osc.start(now + i * 0.2);
+            osc.stop(now + 0.5 + i * 0.2);
+        }
+    };
+
+    if (!isChristmas) return null;
+
+    return (
+        <>
+            {/* Snowflakes */}
+            <div className="snowflakes-container">
+                {Array.from({ length: 50 }).map((_, i) => (
+                    <div
+                        key={`snow-${i}`}
+                        className="snowflake"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 10}s`,
+                            animationDuration: `${10 + Math.random() * 5}s`,
+                            fontSize: `${10 + Math.random() * 20}px`,
+                        }}
+                    >
+                        ❄️
+                    </div>
+                ))}
+            </div>
+
+            {/* Confetti */}
+            <div className="confetti-container">
+                {Array.from({ length: 100 }).map((_, i) => (
+                    <div
+                        key={`confetti-${i}`}
+                        className="confetti"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            backgroundColor: ['#ffd700', '#ff69b4', '#00bfff', '#98fb98', '#ff6347'][
+                                Math.floor(Math.random() * 5)
+                            ],
+                            animationDelay: `${Math.random() * 3}s`,
+                            animationDuration: `${3 + Math.random() * 2}s`,
+                        }}
+                    />
+                ))}
+            </div>
+
+            {/* Christmas Background Overlay */}
+            <style>{`
+                @keyframes fall {
+                    0% {
+                        top: -10vh;
+                        opacity: 1;
+                    }
+                    100% {
+                        top: 100vh;
+                        opacity: 0;
+                    }
+                }
+
+                @keyframes confetti-fall {
+                    0% {
+                        top: -10px;
+                        opacity: 1;
+                        transform: rotate(0deg) translateX(0);
+                    }
+                    100% {
+                        top: 100vh;
+                        opacity: 0;
+                        transform: rotate(720deg) translateX(100px);
+                    }
+                }
+
+                .snowflakes-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+
+                .snowflake {
+                    position: absolute;
+                    top: -10vh;
+                    opacity: 0.7;
+                    animation: fall linear infinite;
+                }
+
+                .confetti-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+
+                .confetti {
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    top: -10px;
+                    border-radius: 50%;
+                    animation: confetti-fall ease-in infinite;
+                }
+            `}</style>
+        </>
+    );
+}
+
 export default function App() {
     const [selectedId, setSelectedId] = useState(null);
     const [showLinksInfo, setShowLinksInfo] = useState(null);
@@ -417,6 +572,7 @@ export default function App() {
             )}
 
             <BackToTop />
+            <ChristmasEffects />
         </div>
     );
 }
