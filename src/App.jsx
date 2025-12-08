@@ -563,7 +563,6 @@ function ExpenseCalculator() {
                     </button>
                 </div>
 
-                {/* Resumo */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
                     <div style={{ background: 'rgba(255,215,0,0.1)', padding: '20px', borderRadius: '12px', border: '2px solid #ffd700', textAlign: 'center' }}>
                         <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '8px' }}>Total Gasto</p>
@@ -575,7 +574,6 @@ function ExpenseCalculator() {
                     </div>
                 </div>
 
-                {/* Lista de gastos */}
                 {expenses.length > 0 && (
                     <>
                         <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>📋 Gastos Registrados</h3>
@@ -628,7 +626,6 @@ function ExpenseCalculator() {
                     </>
                 )}
 
-                {/* Acertos */}
                 {expenses.length > 0 && (
                     <>
                         <h3 style={{ color: '#fff', marginBottom: '15px', fontSize: '1.2rem' }}>💸 Quem Deve Pagar/Receber</h3>
