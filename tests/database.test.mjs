@@ -88,7 +88,7 @@ async function invite(owner, groupId, email) {
   await admin();
   const job = (
     await db.query(
-      "select payload->>'token' as token, id as job_id from private.email_jobs where invite_id = $1",
+      "select payload->>'token' as token, id as job_id from amigo_private.email_jobs where invite_id = $1",
       [rows[0].id],
     )
   ).rows[0];
@@ -319,7 +319,7 @@ for (const size of [2, 10, 50])
     assert.equal(
       (
         await db.query(
-          "select count(*)::int as n from private.email_jobs where group_id=$1 and kind='draw_ready'",
+          "select count(*)::int as n from amigo_private.email_jobs where group_id=$1 and kind='draw_ready'",
           [g.id],
         )
       ).rows[0].n,
@@ -409,7 +409,7 @@ test("tokens e fila de e-mail são privados; reenvio não reclama jobs já em pr
   const inv = await invite(owner, g.id, guest.email);
   await as(owner.id);
   await assert.rejects(
-    db.query("select * from private.email_jobs"),
+    db.query("select * from amigo_private.email_jobs"),
     /permission denied/,
   );
   await assert.rejects(
@@ -439,7 +439,7 @@ test("tokens e fila de e-mail são privados; reenvio não reclama jobs já em pr
   await admin();
   assert.deepEqual(
     (
-      await db.query("select payload from private.email_jobs where id=$1", [
+      await db.query("select payload from amigo_private.email_jobs where id=$1", [
         inv.job_id,
       ])
     ).rows[0].payload,
@@ -482,7 +482,7 @@ test("fila limita tentativas automáticas e somente o organizador pode solicitar
   const guest = await person();
   const g = await group(owner);
   const inv = await invite(owner, g.id, guest.email);
-  await db.query("update private.email_jobs set attempts=5 where id=$1", [
+  await db.query("update amigo_private.email_jobs set attempts=5 where id=$1", [
     inv.job_id,
   ]);
   await as(null, "service_role");
