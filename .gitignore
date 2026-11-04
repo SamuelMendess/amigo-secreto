@@ -10,10 +10,17 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+playwright-report/
+test-results/
+supabase/.temp/
+supabase/.branches/
 *.local
 
 # Environment variables
 .env
+.env.*
+!.env.example
+!.env.functions.example
 .env.local
 .env.*.local
 

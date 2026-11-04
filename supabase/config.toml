@@ -1,0 +1,4 @@
+project_id = "amigo-secreto"
+[functions.process-emails]
+# O handler valida o JWT com Auth.getUser ou o segredo privado do agendador.
+verify_jwt = false
